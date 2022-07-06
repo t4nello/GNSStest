@@ -60,6 +60,7 @@ void mqtt_connect(){
    client.publish(sendTopic, "Hello there!");
 }
 
+// callback function to recieve messeages
 void callback(char *topic, byte *payload, unsigned int length) {
   Serial.print("new messeage in topic: ");
   Serial.println(reciveTopic);
@@ -69,6 +70,7 @@ void callback(char *topic, byte *payload, unsigned int length) {
   }
 }
 
+//checking if gps is connected properly if no, then it will send message to topic "gpstatus"
 void checkGPS()
 {
   if (gps.charsProcessed() < 10){
@@ -79,6 +81,7 @@ void checkGPS()
   }
 }
 
+//method to send dta from module to special topics 
 void sendGPSData(){
    while (SerialGPS.available() >0) {
        gps.encode(SerialGPS.read());
@@ -106,7 +109,7 @@ void setup() {
   gpssend.attach(0.5,sendGPSData);
 }
 
+
 void loop() {
  client.loop();
-
 }
