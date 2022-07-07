@@ -10,6 +10,8 @@
 #define password "MQTTtest2137!"
 #define rxPin 4
 #define txPin 5
+
+//Serial speed Setup
 #define baudRate 115200
 #define GPSBaud 9600
 
@@ -30,9 +32,6 @@ char *year = "gps/year";
 char *hour = "gps/hour";
 char *minute = "gps/minte";
 char *second = "gps/second";
-
-float latitude , longitude;
-String date_str , time_str , lat_str , lng_str;
 
 // constructors
 WiFiClient wifiConnection;
@@ -65,8 +64,9 @@ void mqtt_connect(){
       } else {
           Serial.print("Connection failed");
       }
-   client.publish(wifistatus, "ESP succesfully connected to Wi-FI");
+   client.publish(wifistatus, "ESP succesfully connected to Wi-FI and broker");
 }
+
 
 // callback function to recieve messeages
 void callback(char *topic, byte *payload, unsigned int length) {
@@ -89,13 +89,13 @@ void callback(char *topic, byte *payload, unsigned int length) {
 }
 
 String lat2String;
-char lat[50];
+char latChar[50];
 
 void displayInfo() {
 if (gps.location.isValid()) {
   lat2String = String(gps.location.lat(), 6);
-  temp.toCharArray(lat, temp.length() + 1);
-  client.publish(lat,lat);
+  lat2String.toCharArray(latChar, lat2String.length() + 1);
+  client.publish(lat,latChar);
 }
 }
 
