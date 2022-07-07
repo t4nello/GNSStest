@@ -15,7 +15,6 @@
 Project is created with:
 * Arduino IDE
 * MQTT
-* ASP .NET
 * Node.JS RED
 	
 ## Setup
@@ -26,20 +25,23 @@ Project is created with:
 
 ## Backend
 * connect to wi-fi - done 
-* connect to broker
-* connect to GNSS module
-* subscribe to topic
+* connect to broker -done 
+* connect to GNSS module -done
+* subscribe to topic -done but not in use atm 
 * publish info about GNSS module:
-          * Latitude
+          * Latitude - done 
           * Longitude
           * Time 
           * Speed
           * Number of sattelites
 * use 2 modules at once           
 ## Frontend 
-* select technology (ASP or nodered)
-* subscribe to MQTT topics about GNSS info
-* write dynamicly charts about data
+* select technology - done NODERED
+* subscribe to MQTT topics about GNSS info -done for 1 topic atm 
+* write dynamicly charts about data -done for 1 topic atm 
+* use auth 
+* save data about sent data to database to store them or show 
+
 
 ## Tests 
 * tests will be done in city and nearby forests
