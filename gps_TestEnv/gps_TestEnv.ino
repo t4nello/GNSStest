@@ -2,7 +2,7 @@
 #include <PubSubClient.h>
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
-#include <Ticker.H>
+
 
 
 // Wi-Fi information
@@ -11,19 +11,28 @@
 #define rxPin 4
 #define txPin 5
 #define baudRate 115200
+#define GPSBaud 9600
 
 // MQTT setup
-char *mqtt_broker = "broker.emqx.io";
+char *mqtt_broker = "192.168.0.123";
 int mqtt_port = 1883;
-char *mqtt_uname= "test";
-char *mqtt_passwd= "test";
-char *sendTopic= "esp/sendtopic";
-char *reciveTopic= "esp/recivetopic";
+char *mqtt_uname= "TestUser1";
+char *mqtt_passwd= "saper22";
+char *receivetopic = "esp/incoming";
+char *wifistatus= "esp/constatus";
 char *gpsstatus= "esp/gpsstatus";
+char *sats = "gps/satellites";
+char *lat = "gps/lat";
+char *lng = "gps/lng";
+char *day = "gps/day";
+char *month  ="gps/month";
+char *year = "gps/year";
+char *hour = "gps/hour";
+char *minute = "gps/minte";
+char *second = "gps/second";
 
-
-Ticker gpssend;
-
+float latitude , longitude;
+String date_str , time_str , lat_str , lng_str;
 
 // constructors
 WiFiClient wifiConnection;
@@ -35,10 +44,10 @@ SoftwareSerial gpsSerial(rxPin, txPin);
 // connect to wi-fi method
 void wifi_connect(){ 
   WiFi.begin(ssid, password);             
-  serial.print("connecting to WI-FI");
+  Serial.print("connecting to WI-FI");
   while (WiFi.status() != WL_CONNECTED) { 
     delay(500);
-    serial.print(".").
+    Serial.print(".");
   }
   Serial.println("Connected to network with ip:");  
   Serial.println(WiFi.localIP());        
@@ -56,60 +65,46 @@ void mqtt_connect(){
       } else {
           Serial.print("Connection failed");
       }
-   client.subscribe(reciveTopic);
-   client.publish(sendTopic, "Hello there!");
+   client.publish(wifistatus, "ESP succesfully connected to Wi-FI");
 }
 
 // callback function to recieve messeages
 void callback(char *topic, byte *payload, unsigned int length) {
   Serial.print("new messeage in topic: ");
-  Serial.println(reciveTopic);
+  Serial.println(receivetopic);
   Serial.print("Message:");
   for (int i = 0; i < length; i++) {
       Serial.print((char) payload[i]);
   }
 }
-
-//checking if gps is connected properly if no, then it will send message to topic "gpstatus"
-void checkGPS()
-{
-  if (gps.charsProcessed() < 10){
-    client.publish(gpsstatus, "GPSError");
-  }
-  else{
-    client.publish(gpsstatus,"GPSOK")
-  }
-}
-
-//method to send dta from module to special topics 
-void sendGPSData(){
-   while (SerialGPS.available() >0) {
-       gps.encode(SerialGPS.read());
-    }
-    client.publish(sats,gps.satellites.value());
-    client.publish(lat,gps.location.lat()());
-    client.publish(lng,gps.location.lng();());
-    client.publish(day,gps.date.day());
-    client.publish(month,gps.date.month());
-    client.publish(year,gps.date.year());
-    client.publish(hour,gps.time.hour());
-    client.publish(minute,gps.time.minute());
-    client.publish(second,gps.time.second());
-
-}
-   
-
-void setup() {
-
+  void setup() {
+    gpsSerial.begin(GPSBaud);
   Serial.begin(baudRate);
-  gpsSerial.begin(baudRate)
+
+ 
   client.setCallback(callback);
   wifi_connect();
   mqtt_connect();
-  gpssend.attach(0.5,sendGPSData);
+  
 }
 
+String lat2String;
+char lat[50];
 
-void loop() {
- client.loop();
+void displayInfo() {
+if (gps.location.isValid()) {
+  lat2String = String(gps.location.lat(), 6);
+  temp.toCharArray(lat, temp.length() + 1);
+  client.publish(lat,lat);
 }
+}
+
+void loop()
+{
+  while (gpsSerial.available() > 0){
+    gps.encode(gpsSerial.read());
+    displayInfo();
+    delay(5000);
+  }
+   
+  }
