@@ -17,6 +17,9 @@
 unsigned long previousMillis = 0;
 const long interval = 2000;  
 
+char* toCharArray(String str) {
+  return &str[0];
+}
 
 // Broker Setup
 char *mqtt_broker = "192.168.0.123";
@@ -30,6 +33,26 @@ char *brokerStatus = "esp/macaddress/";
 char *wifissid = "esp/wifi/ssid";
 char *gpsstatus= "esp/status/gps";
 
+
+//GPS data topics 
+          char *latTopic = "";
+          char *lngTopic= "" ;
+          char *spdTopic= "";
+          char *dateTopic= ""; 
+          char *timeTopic= ""; 
+          char *satTopic= "";
+          char *crsTopic= "";
+          char *altTopic= ""; 
+
+float latitude, longitude, speed,
+  date, _time, satellites, course, altitude;
+
+String lat_str, lng_str, spd_str, 
+         date_str, time_str, sat_str, crs_str, alt_str;
+
+char lat_ch[50] , lng_ch[50], spd_ch[50], 
+          date_ch[50], time_ch[50], sat_ch[50], crs_ch[50], alt_ch[50];  
+
          
 // constructors
 WiFiClientSecure wifiConnection;
@@ -37,40 +60,13 @@ PubSubClient client(wifiConnection);
 TinyGPSPlus gps;
 SoftwareSerial gpsSerial(rxPin, txPin);
 
-  
-   
-char* toCharArray(String str) {
-  return &str[0];
-}
-
-String datalog[]= {  String(gps.location.lat(),6), String(gps.location.lng(),6)};
-//,  gps.location.lng(),gps.speed.kmph(), gps.date.value(), gps.time.value(),gps.altitude.meters(), gps.satellites.value()};
-auto dataSize = std::size(datalog);
-char *prepareTopic (String input){
-char ready[50]; 
-  String mac =toCharArray(WiFi.macAddress());
-  String output= input+mac; 
-  output.toCharArray(ready, output.length() + 1);  
-  return ready;
-}
-
-char* prepareData (double input){
-         String stringified = String(input , 6); 
-         char ready[50]; 
-        stringified.toCharArray(ready, stringified.length() + 1);  
-       return ready;
-}
-
 void brokerConnect(){
-  
   WiFi.begin(ssid, password);        
-
   String client_id = "esp8266-client-";
     client_id += String(WiFi.macAddress());
     String topic1 = brokerStatus + String(WiFi.macAddress()) ;
     char ready[50]; 
     topic1.toCharArray(ready, topic1.length() + 1);  
-  
   Serial.print("Connecting");
   while (WiFi.status() != WL_CONNECTED)
   {
@@ -95,6 +91,8 @@ void brokerConnect(){
 
  } 
  }
+
+
 String passValue = "";
 
 String startGPS(char* topic, byte* message, unsigned int length) {
@@ -107,18 +105,63 @@ String startGPS(char* topic, byte* message, unsigned int length) {
     return passValue;
 }
 
-char* tocharArray(String str) {
-  return &str[0];
-}
+String topics[10] = {"gps/lat/", "gps/lng/", "gps/spd/", "gps/date/", "gps/time/", "gps/sat/", "gps/crs/", "gps/alt/"};
+float topicsSize = (sizeof(topics)/sizeof(*topics));
 
-void sendGpsData(){
-       for (int i = 1; i<=dataSize; i++){
+
+char mac_ch[50];
+String  mac = String(WiFi.macAddress());
+void prepareTopics(){
+for (int i=0; i<=7;i++){
+    topics[i] += mac;
+}}
+
+void sendGPSData(){
           
-          Serial.println(datalog[i]);  
-       }
+    lat_str = String(gps.location.lat(),6); 
+    lat_str.toCharArray(lat_ch, lat_str.length()+1); 
+    topics[0].toCharArray(latTopic, topics[0].length()+1); 
+    client.publish(latTopic,lat_ch); 
+
+     lng_str = String(gps.location.lng(),6); 
+     lng_str.toCharArray(lng_ch, lng_str.length() + 1); 
+     topics[1].toCharArray(lngTopic, topics[1].length() + 1); 
+     client.publish(lngTopic, lng_ch); 
+
+     spd_str = String(gps.speed.kmph(),2); 
+     spd_str.toCharArray(spd_ch, spd_str.length() + 1); 
+     topics[2].toCharArray(spdTopic, topics[2].length() + 1); 
+     client.publish(spdTopic, spd_ch); 
+
+     date_str = String(gps.date.value()); 
+     date_str.toCharArray(date_ch, date_str.length() + 1); 
+     topics[3].toCharArray(dateTopic, topics[4].length() + 1); 
+     client.publish(latTopic, lat_ch); 
+
+     time_str = String(gps.time.value()); 
+     time_str.toCharArray(time_ch, time_str.length() + 1); 
+     topics[4].toCharArray(timeTopic, topics[4].length() + 1); 
+     client.publish(timeTopic, time_ch); 
+
+     sat_str = String(gps.satellites.value()); 
+     sat_str.toCharArray(sat_ch, sat_str.length()+1); 
+     topics[5].toCharArray(satTopic, topics[5].length() + 1); 
+     client.publish(satTopic, sat_ch); 
+
+     crs_str = String(gps.course.deg()); 
+     crs_str.toCharArray(crs_ch, crs_str.length()+1); 
+     topics[6].toCharArray(crsTopic, topics[6].length() + 1); 
+     client.publish(crsTopic, crs_ch); 
+
+     alt_str = String(gps.altitude.meters()); 
+     alt_str.toCharArray(alt_ch, alt_str.length()+1); 
+     topics[7].toCharArray(altTopic, topics[7].length() + 1); 
+     client.publish(altTopic, alt_ch); 
+          
+          
+          
+          
           }
-
-
 
 void setup() {
   gpsSerial.begin(GPSBaud);
@@ -127,15 +170,20 @@ void setup() {
   brokerConnect();
   client.setCallback(startGPS);
   client.subscribe("esp/incoming");
- 
-}
-
+ }
+int passflag = 0;
 void loop()
 {
-
+ if (passflag==0)
+ {
+  prepareTopics();
+  passflag++;
+  for (int i=1; i<=6; i++)
+  Serial.println(topics[i]);
+ }
 unsigned long currentMillis = millis();
-//sendGpsData();
  client.loop();
+// sendGPSData();
   while (gpsSerial.available() > 0 ) {
     if (gps.encode(gpsSerial.read()))
       {
@@ -144,7 +192,7 @@ unsigned long currentMillis = millis();
           
            if (currentMillis - previousMillis >= interval  ) {
                 previousMillis = currentMillis;
-                sendGpsData();
+                sendGPSData();
      
               }
         }
