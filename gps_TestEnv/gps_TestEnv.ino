@@ -168,19 +168,15 @@ void setup() {
   Serial.begin(baudRate);
   wifiConnection.setInsecure();
   brokerConnect();
+  prepareTopics();
+
+   for (int i=1; i<=6; i++){
+  Serial.println(topics[i]);
+ }
   client.setCallback(startGPS);
   client.subscribe("esp/incoming");
  }
-int passflag = 0;
-void loop()
-{
- if (passflag==0)
- {
-  prepareTopics();
-  passflag++;
-  for (int i=1; i<=6; i++)
-  Serial.println(topics[i]);
- }
+void loop(){
 unsigned long currentMillis = millis();
  client.loop();
 // sendGPSData();
