@@ -3,108 +3,199 @@
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 
-
+//Hardware Setup
+#define rxPin 4
+#define txPin 5
+#define baudRate 115200
+#define GPSBaud 9600
 
 // Wi-Fi information
 #define ssid "ESPtest"
 #define password "MQTTtest2137!"
-#define rxPin 4
-#define txPin 5
 
-//Serial speed Setup
-#define baudRate 115200
-#define GPSBaud 9600
+//variables for delay without delay
+unsigned long previousMillis = 0;
+const long interval = 2000;  
 
-// MQTT setup
+char* toCharArray(String str) {
+  return &str[0];
+}
+
+// Broker Setup
 char *mqtt_broker = "192.168.0.123";
-int mqtt_port = 1883;
-char *mqtt_uname= "TestUser1";
-char *mqtt_passwd= "saper22";
-char *receivetopic = "esp/incoming";
-char *wifistatus= "esp/constatus";
-char *gpsstatus= "esp/gpsstatus";
-char *sats = "gps/satellites";
-char *lat = "gps/lat";
-char *lng = "gps/lng";
-char *day = "gps/day";
-char *month  ="gps/month";
-char *year = "gps/year";
-char *hour = "gps/hour";
-char *minute = "gps/minte";
-char *second = "gps/second";
+int mqtt_port = 8885;
+char *mqtt_uname = "TestUser2";
+char *mqtt_passwd = "test";
 
+// topics about hardware info
+char *gpsstart = "esp/gps/start";
+char *brokerStatus = "esp/macaddress/";
+char *wifissid = "esp/wifi/ssid";
+char *gpsstatus= "esp/status/gps";
+
+
+//GPS data topics 
+          char *latTopic = "";
+          char *lngTopic= "" ;
+          char *spdTopic= "";
+          char *dateTopic= ""; 
+          char *timeTopic= ""; 
+          char *satTopic= "";
+          char *crsTopic= "";
+          char *altTopic= ""; 
+
+float latitude, longitude, speed,
+  date, _time, satellites, course, altitude;
+
+String lat_str, lng_str, spd_str, 
+         date_str, time_str, sat_str, crs_str, alt_str;
+
+char lat_ch[50] , lng_ch[50], spd_ch[50], 
+          date_ch[50], time_ch[50], sat_ch[50], crs_ch[50], alt_ch[50];  
+
+         
 // constructors
-WiFiClient wifiConnection;
+WiFiClientSecure wifiConnection;
 PubSubClient client(wifiConnection);
 TinyGPSPlus gps;
 SoftwareSerial gpsSerial(rxPin, txPin);
 
-
-// connect to wi-fi method
-void wifi_connect(){ 
-  WiFi.begin(ssid, password);             
-  Serial.print("connecting to WI-FI");
-  while (WiFi.status() != WL_CONNECTED) { 
+void brokerConnect(){
+  WiFi.begin(ssid, password);        
+  String client_id = "esp8266-client-";
+    client_id += String(WiFi.macAddress());
+    String topic1 = brokerStatus + String(WiFi.macAddress()) ;
+    char ready[50]; 
+    topic1.toCharArray(ready, topic1.length() + 1);  
+  Serial.print("Connecting");
+  while (WiFi.status() != WL_CONNECTED)
+  {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("Connected to network with ip:");  
-  Serial.println(WiFi.localIP());        
-}
+  Serial.println();
 
-//connect to broker 
-void mqtt_connect(){
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    Serial.print("No Wi-Fi connection, unable to connect to MQTT broker");
-  }
+  Serial.print("Connected, IP address: ");
+  Serial.println(WiFi.localIP());
    client.setServer(mqtt_broker, mqtt_port);
-    if (client.connect("ESP8266", mqtt_uname, mqtt_passwd)) {
-          Serial.println("Succesfully connected to broker ");
-      } else {
-          Serial.print("Connection failed");
-      }
-   client.publish(wifistatus, "ESP succesfully connected to Wi-FI and broker");
-}
+     while (!client.connected()) {
+    if (client.connect(toCharArray(WiFi.macAddress()), mqtt_uname, mqtt_passwd)) {
+    } else {
+        Serial.print("failed with state ");
+        Serial.print(client.state());
+        delay(2000);
+    }
+        client.publish(ready, "connected" );
+         Serial.print (ready);
+          Serial.print("piwo");
+
+ } 
+ }
 
 
-// callback function to recieve messeages
-void callback(char *topic, byte *payload, unsigned int length) {
-  Serial.print("new messeage in topic: ");
-  Serial.println(receivetopic);
-  Serial.print("Message:");
-  for (int i = 0; i < length; i++) {
-      Serial.print((char) payload[i]);
-  }
+String passValue = "";
+
+String startGPS(char* topic, byte* message, unsigned int length) {
+
+ passValue= "";
+    for (int i = 0; i < length; i++) {
+        Serial.print((char)message[i]);
+        passValue += (char)message[i];
+    }
+    return passValue;
 }
-  void setup() {
-    gpsSerial.begin(GPSBaud);
+
+String topics[10] = {"gps/lat/", "gps/lng/", "gps/spd/", "gps/date/", "gps/time/", "gps/sat/", "gps/crs/", "gps/alt/"};
+float topicsSize = (sizeof(topics)/sizeof(*topics));
+
+
+char mac_ch[50];
+String  mac = String(WiFi.macAddress());
+void prepareTopics(){
+for (int i=0; i<=7;i++){
+    topics[i] += mac;
+}}
+
+void sendGPSData(){
+          
+    lat_str = String(gps.location.lat(),6); 
+    lat_str.toCharArray(lat_ch, lat_str.length()+1); 
+    topics[0].toCharArray(latTopic, topics[0].length()+1); 
+    client.publish(latTopic,lat_ch); 
+
+     lng_str = String(gps.location.lng(),6); 
+     lng_str.toCharArray(lng_ch, lng_str.length() + 1); 
+     topics[1].toCharArray(lngTopic, topics[1].length() + 1); 
+     client.publish(lngTopic, lng_ch); 
+
+     spd_str = String(gps.speed.kmph(),2); 
+     spd_str.toCharArray(spd_ch, spd_str.length() + 1); 
+     topics[2].toCharArray(spdTopic, topics[2].length() + 1); 
+     client.publish(spdTopic, spd_ch); 
+
+     date_str = String(gps.date.value()); 
+     date_str.toCharArray(date_ch, date_str.length() + 1); 
+     topics[3].toCharArray(dateTopic, topics[4].length() + 1); 
+     client.publish(latTopic, lat_ch); 
+
+     time_str = String(gps.time.value()); 
+     time_str.toCharArray(time_ch, time_str.length() + 1); 
+     topics[4].toCharArray(timeTopic, topics[4].length() + 1); 
+     client.publish(timeTopic, time_ch); 
+
+     sat_str = String(gps.satellites.value()); 
+     sat_str.toCharArray(sat_ch, sat_str.length()+1); 
+     topics[5].toCharArray(satTopic, topics[5].length() + 1); 
+     client.publish(satTopic, sat_ch); 
+
+     crs_str = String(gps.course.deg()); 
+     crs_str.toCharArray(crs_ch, crs_str.length()+1); 
+     topics[6].toCharArray(crsTopic, topics[6].length() + 1); 
+     client.publish(crsTopic, crs_ch); 
+
+     alt_str = String(gps.altitude.meters()); 
+     alt_str.toCharArray(alt_ch, alt_str.length()+1); 
+     topics[7].toCharArray(altTopic, topics[7].length() + 1); 
+     client.publish(altTopic, alt_ch); 
+          
+          
+          
+          
+          }
+
+void setup() {
+  gpsSerial.begin(GPSBaud);
   Serial.begin(baudRate);
-
- 
-  client.setCallback(callback);
-  wifi_connect();
-  mqtt_connect();
-  
-}
-
-String lat2String;
-char latChar[50];
-
-void displayInfo() {
-if (gps.location.isValid()) {
-  lat2String = String(gps.location.lat(), 6);
-  lat2String.toCharArray(latChar, lat2String.length() + 1);
-  client.publish(lat,latChar);
-}
-}
-
+  wifiConnection.setInsecure();
+  brokerConnect();
+  client.setCallback(startGPS);
+  client.subscribe("esp/incoming");
+ }
+int passflag = 0;
 void loop()
 {
-  while (gpsSerial.available() > 0){
-    gps.encode(gpsSerial.read());
-    displayInfo();
-    delay(5000);
-  }
-   
-  }
+ if (passflag==0)
+ {
+  prepareTopics();
+  passflag++;
+  for (int i=1; i<=6; i++)
+  Serial.println(topics[i]);
+ }
+unsigned long currentMillis = millis();
+ client.loop();
+// sendGPSData();
+  while (gpsSerial.available() > 0 ) {
+    if (gps.encode(gpsSerial.read()))
+      {
+        if (gps.location.isValid() && passValue  == "on" )
+        {
+          
+           if (currentMillis - previousMillis >= interval  ) {
+                previousMillis = currentMillis;
+                sendGPSData();
+     
+              }
+        }
+      }
+    }
+}
