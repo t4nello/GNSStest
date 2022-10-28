@@ -86,28 +86,13 @@ void brokerConnect(){
         delay(2000);
     }
         client.publish(ready, "connected" );
-         Serial.print (ready);
-          Serial.print("piwo");
-
  } 
  }
 
 
-String passValue = "";
 
-String startGPS(char* topic, byte* message, unsigned int length) {
-
- passValue= "";
-    for (int i = 0; i < length; i++) {
-        Serial.print((char)message[i]);
-        passValue += (char)message[i];
-    }
-    return passValue;
-}
 
 String topics[10] = {"gps/lat/", "gps/lng/", "gps/spd/", "gps/date/", "gps/time/", "gps/sat/", "gps/crs/", "gps/alt/"};
-float topicsSize = (sizeof(topics)/sizeof(*topics));
-
 
 char mac_ch[50];
 String  mac = String(WiFi.macAddress());
@@ -135,8 +120,8 @@ void sendGPSData(){
 
      date_str = String(gps.date.value()); 
      date_str.toCharArray(date_ch, date_str.length() + 1); 
-     topics[3].toCharArray(dateTopic, topics[4].length() + 1); 
-     client.publish(latTopic, lat_ch); 
+     topics[3].toCharArray(dateTopic, topics[3].length() + 1); 
+     client.publish(dateTopic, date_ch); 
 
      time_str = String(gps.time.value()); 
      time_str.toCharArray(time_ch, time_str.length() + 1); 
@@ -157,12 +142,18 @@ void sendGPSData(){
      alt_str.toCharArray(alt_ch, alt_str.length()+1); 
      topics[7].toCharArray(altTopic, topics[7].length() + 1); 
      client.publish(altTopic, alt_ch); 
-          
-          
-          
-          
-          }
+}
 
+String passValue= "";
+String startGPS(char* topic, byte* message, unsigned int length) {
+
+passValue.clear();
+    for (int i = 0; i < length; i++) {
+        Serial.print((char)message[i]);
+        passValue += (char)message[i];
+    }
+    return passValue;
+}
 void setup() {
   gpsSerial.begin(GPSBaud);
   Serial.begin(baudRate);
@@ -170,24 +161,17 @@ void setup() {
   brokerConnect();
   client.setCallback(startGPS);
   client.subscribe("esp/incoming");
- }
-int passflag = 0;
-void loop()
-{
- if (passflag==0)
- {
   prepareTopics();
-  passflag++;
-  for (int i=1; i<=6; i++)
-  Serial.println(topics[i]);
  }
+
+void loop(){
 unsigned long currentMillis = millis();
  client.loop();
-// sendGPSData();
+ //Serial.print(passValue);
   while (gpsSerial.available() > 0 ) {
     if (gps.encode(gpsSerial.read()))
       {
-        if (gps.location.isValid() && passValue  == "on" )
+        if (gps.location.isValid() && passValue == "on")
         {
           
            if (currentMillis - previousMillis >= interval  ) {
