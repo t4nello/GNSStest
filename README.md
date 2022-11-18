@@ -35,12 +35,12 @@ Project is created with:
 * When connected to broker, sends topic with ESP module MAC Address to topic "esp/macaddress/+" where "+" is MAC address of device
 * Subscibes to "esp/gps/start" - topic that sends payload 0 or 1 depends if user wants to turn off or on sending gps data
 * Sends data from GNSS module 
-          * Latitude 
-          * Longitude
-          * Time 
-	  * Altitude
-          * Speed
-          * Number of sattelites         
+	* Latitude 
+        * Longitude
+        * Time 
+	* Altitude
+        * Speed
+        * Number of sattelites         
 ## Frontend 
 * WebService based on Node-RED 
 * Grafana plugin that can visualize data from unlimited numbers of modules
