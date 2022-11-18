@@ -88,7 +88,7 @@ void brokerConnect(){
  }
 
 
-String topics[10] = {"gps/lat/", "gps/lng/", "gps/spd/", "gps/date/", "gps/time/", "gps/sat/", "gps/crs/", "gps/alt/"};
+String topics[10] = {"gps/Latitude/", "gps/Longitude/", "gps/spd/", "gps/date/", "gps/time/", "gps/sat/", "gps/crs/", "gps/alt/"};
 
 void prepareTopics(){
 for (int i=0; i<=8;i++){
@@ -97,12 +97,12 @@ for (int i=0; i<=8;i++){
 
 void sendGPSData(){
           
-    lat_str = String(gps.location.lat(),6); 
+    lat_str = String(gps.location.lat(),7); 
     lat_str.toCharArray(lat_ch, lat_str.length()+1); 
     topics[0].toCharArray(latTopic, topics[0].length()+1); 
     client.publish(latTopic,lat_ch); 
 
-     lng_str = String(gps.location.lng(),6); 
+     lng_str = String(gps.location.lng(),7); 
      lng_str.toCharArray(lng_ch, lng_str.length() + 1); 
      topics[1].toCharArray(lngTopic, topics[1].length() + 1); 
      client.publish(lngTopic, lng_ch); 

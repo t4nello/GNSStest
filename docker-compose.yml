@@ -1,0 +1,39 @@
+version: '3'
+services:
+  nodered:
+    depends_on:
+        - grafana
+    image: wsapon/gnsstest:nodered
+    ports:
+        - "1880:1880"
+    networks:
+        test:
+            ipv4_address: 172.18.0.4
+  influxdb:
+    image: influxdb:latest
+    ports:
+      - '8086:8086'
+    environment:
+    - DOCKER_INFLUXDB_INIT_MODE=setup
+    - DOCKER_INFLUXDB_INIT_USERNAME=admin
+    - DOCKER_INFLUXDB_INIT_PASSWORD=admin1234
+    - DOCKER_INFLUXDB_INIT_BUCKET=GNSSTest
+    - DOCKER_INFLUXDB_INIT_ORG=UZ
+    - DOCKER_INFLUXDB_HTTP_AUTH_ENABLED=true
+    - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=iuin0uDsHggy8aWBzQM3KMZcUOGuDoO4hFKH8SsanUJXQjT4d1W_vvtaInU8dLVOdj-FFJnwESMNpG4cpIvYHw==
+    networks:
+        test:
+            ipv4_address: 172.18.0.2
+  grafana:
+    image: wsapon/gnsstest:grafana
+    ports:
+      - '3000:3000'
+    networks:
+        test:
+            ipv4_address: 172.18.0.3
+networks:
+  test:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 172.18.0.0/16
