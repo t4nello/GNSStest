@@ -48,7 +48,7 @@ Project is created with:
 
 ## Docker Compose File
 
-User can pull and run both preconfigured container using 
+User can pull and run both preconfigured containers using 
 ```
 docker compose up
 ```
@@ -66,7 +66,6 @@ use command
 docker network prune
 
 ```
-to 
 ## Tests 
 * tests will be done in city and nearby forests
 * they will show the accurancy of gnss modules 
