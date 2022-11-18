@@ -18,7 +18,7 @@ Project is created with:
 * MQTT
 * Node.JS RED
 * Grafana
-*InfluxDB
+* InfluxDB
 	
 ## Hardware Requirements
 * MQTT broker, private or public
