@@ -36,11 +36,11 @@ Project is created with:
 * Subscibes to "esp/gps/start" - topic that sends payload 0 or 1 depends if user wants to turn off or on sending gps data
 * Sends data from GNSS module 
 	* Latitude 
-        * Longitude
+	* Longitude
         * Time 
 	* Altitude
-        * Speed
-        * Number of sattelites         
+	* Speed
+	* Number of sattelites         
 ## Frontend 
 * WebService based on Node-RED 
 * Grafana plugin that can visualize data from unlimited numbers of modules
