@@ -8,6 +8,7 @@
 #define txPin 5
 #define baudRate 115200
 #define GPSBaud 9600
+#define LED_BUILTIN 2
 
 // Wi-Fi information
 #define ssid "ESPtest"
@@ -31,7 +32,10 @@ char *mqtt_passwd = "test";
 char *gpsstart = "esp/gps/start";
 char *brokerStatus = "esp/macaddress/";
 char *wifissid = "esp/wifi/ssid";
-char *gpsstatus= "esp/status/gps";
+char *locate= "esp/locate";
+
+
+String  mac = String(WiFi.macAddress());
 
 
 //GPS data topics 
@@ -51,7 +55,7 @@ String lat_str, lng_str, spd_str,
          date_str, time_str, sat_str, crs_str, alt_str;
 
 char lat_ch[50] , lng_ch[50], spd_ch[50], 
-          date_ch[50], time_ch[50], sat_ch[50], crs_ch[50], alt_ch[50];  
+          date_ch[50], time_ch[50], sat_ch[50], crs_ch[50], alt_ch[50], con_ch[50];  
 
          
 // constructors
@@ -62,53 +66,43 @@ SoftwareSerial gpsSerial(rxPin, txPin);
 
 void brokerConnect(){
   WiFi.begin(ssid, password);        
-  String client_id = "esp8266-client-";
-    client_id += String(WiFi.macAddress());
-    String topic1 = brokerStatus + String(WiFi.macAddress()) ;
-    char ready[50]; 
-    topic1.toCharArray(ready, topic1.length() + 1);  
-  Serial.print("Connecting");
+  
+  String client_id = "esp8266-client- " + mac;
+  String connectedMac = brokerStatus + mac ;
+    
+ connectedMac.toCharArray(con_ch, connectedMac.length() + 1);  
   while (WiFi.status() != WL_CONNECTED)
   {
-    delay(500);
-    Serial.print(".");
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(100);
+            digitalWrite(LED_BUILTIN, HIGH);
   }
-  Serial.println();
-
-  Serial.print("Connected, IP address: ");
-  Serial.println(WiFi.localIP());
    client.setServer(mqtt_broker, mqtt_port);
      while (!client.connected()) {
     if (client.connect(toCharArray(WiFi.macAddress()), mqtt_uname, mqtt_passwd)) {
     } else {
-        Serial.print("failed with state ");
-        Serial.print(client.state());
-        delay(2000);
-    }
-        client.publish(ready, "connected" );
+       digitalWrite(LED_BUILTIN, LOW);
+       }
+        client.publish(con_ch, "connected" );
  } 
  }
 
 
+String topics[10] = {"gps/Latitude/", "gps/Longitude/", "gps/spd/", "gps/date/", "gps/time/", "gps/sat/", "gps/crs/", "gps/alt/"};
 
-
-String topics[10] = {"gps/lat/", "gps/lng/", "gps/spd/", "gps/date/", "gps/time/", "gps/sat/", "gps/crs/", "gps/alt/"};
-
-char mac_ch[50];
-String  mac = String(WiFi.macAddress());
 void prepareTopics(){
-for (int i=0; i<=7;i++){
+for (int i=0; i<=8;i++){
     topics[i] += mac;
 }}
 
 void sendGPSData(){
           
-    lat_str = String(gps.location.lat(),6); 
+    lat_str = String(gps.location.lat(),7); 
     lat_str.toCharArray(lat_ch, lat_str.length()+1); 
     topics[0].toCharArray(latTopic, topics[0].length()+1); 
     client.publish(latTopic,lat_ch); 
 
-     lng_str = String(gps.location.lng(),6); 
+     lng_str = String(gps.location.lng(),7); 
      lng_str.toCharArray(lng_ch, lng_str.length() + 1); 
      topics[1].toCharArray(lngTopic, topics[1].length() + 1); 
      client.publish(lngTopic, lng_ch); 
@@ -144,34 +138,54 @@ void sendGPSData(){
      client.publish(altTopic, alt_ch); 
 }
 
-String passValue= "";
-String startGPS(char* topic, byte* message, unsigned int length) {
-
-passValue.clear();
-    for (int i = 0; i < length; i++) {
+String startGPS= "";
+String callback(char* topic, byte* message, unsigned int length) {
+  String messageTemp;
+       for (int i = 0; i < length; i++) {
         Serial.print((char)message[i]);
-        passValue += (char)message[i];
+        messageTemp += (char)message[i];
+       }
+       if (strcmp(topic, locate)==0){
     }
-    return passValue;
+     if (messageTemp == String(WiFi.macAddress())){
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(100);
+            digitalWrite(LED_BUILTIN, HIGH);    
+    } 
+if (strcmp(topic, gpsstart)==0) {
+    if (messageTemp == "1")
+    {
+      startGPS = "on";
+    }
+     else if (messageTemp ==  "0")
+    {
+      startGPS = "off";
+    }
+   
+}
+
+    return startGPS;
 }
 void setup() {
+   pinMode(LED_BUILTIN, OUTPUT);
   gpsSerial.begin(GPSBaud);
   Serial.begin(baudRate);
   wifiConnection.setInsecure();
   brokerConnect();
-  client.setCallback(startGPS);
-  client.subscribe("esp/incoming");
+  client.setCallback(callback);
+  client.subscribe(gpsstart);
+   client.subscribe(locate);
   prepareTopics();
+
  }
 
 void loop(){
 unsigned long currentMillis = millis();
  client.loop();
- //Serial.print(passValue);
   while (gpsSerial.available() > 0 ) {
     if (gps.encode(gpsSerial.read()))
       {
-        if (gps.location.isValid() && passValue == "on")
+        if (gps.location.isValid() && startGPS == "on")
         {
           
            if (currentMillis - previousMillis >= interval  ) {
