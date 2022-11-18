@@ -37,7 +37,8 @@ Project is created with:
 * Sends data from GNSS module 
 	* Latitude 
 	* Longitude
-        * Time 
+	* Time 
+	* Date
 	* Altitude
 	* Speed
 	* Number of sattelites         
