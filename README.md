@@ -67,7 +67,5 @@ use command
 docker network prune
 
 ```
-## Tests 
-* tests will be done in city and nearby forests
-* they will show the accurancy of gnss modules 
-* will work out about improving accuracy by using 2 modules at once 
+
+
