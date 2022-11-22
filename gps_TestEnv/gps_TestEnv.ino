@@ -11,34 +11,30 @@
 #define LED_BUILTIN 2
 
 // Wi-Fi information
-#define ssid "ESPtest"
-#define password "MQTTtest2137!"
+#define ssid "" //SSID of WiFi
+#define password "" // password of WiFi
 
-//variables for delay without delay
+//variables for delay without delay function
 unsigned long previousMillis = 0;
 const long interval = 2000;  
 
+//method for conversion string to char array
 char* toCharArray(String str) {
   return &str[0];
 }
 
 // Broker Setup
-char *mqtt_broker = "192.168.0.123";
-int mqtt_port = 8885;
-char *mqtt_uname = "TestUser2";
-char *mqtt_passwd = "test";
+char *mqtt_broker = ""; // broker ip
+int mqtt_port = ; // broker port
+char *mqtt_uname = ""; // broker username
+char *mqtt_passwd = ""; // broker password
 
 // topics about hardware info
 char *gpsstart = "esp/gps/start";
 char *brokerStatus = "esp/macaddress/";
-char *wifissid = "esp/wifi/ssid";
 char *locate= "esp/locate";
 
-
-String  mac = String(WiFi.macAddress());
-
-
-//GPS data topics 
+//gps
           char *latTopic = "";
           char *lngTopic= "" ;
           char *spdTopic= "";
@@ -57,6 +53,15 @@ String lat_str, lng_str, spd_str,
 char lat_ch[50] , lng_ch[50], spd_ch[50], 
           date_ch[50], time_ch[50], sat_ch[50], crs_ch[50], alt_ch[50], con_ch[50];  
 
+String topics[10] = {"gps/Latitude/", "gps/Longitude/", "gps/spd/", "gps/date/", "gps/time/", "gps/sat/", "gps/crs/", "gps/alt/"};
+
+String  mac = String(WiFi.macAddress());
+
+//method for adding macAddres of esp module to topics about GPS data
+void prepareTopics(){
+for (int i=0; i<=8;i++){
+    topics[i] += mac;
+}}
          
 // constructors
 WiFiClientSecure wifiConnection;
@@ -64,13 +69,12 @@ PubSubClient client(wifiConnection);
 TinyGPSPlus gps;
 SoftwareSerial gpsSerial(rxPin, txPin);
 
+
 void brokerConnect(){
   WiFi.begin(ssid, password);        
-  
   String client_id = "esp8266-client- " + mac;
   String connectedMac = brokerStatus + mac ;
-    
- connectedMac.toCharArray(con_ch, connectedMac.length() + 1);  
+  connectedMac.toCharArray(con_ch, connectedMac.length() + 1);  
   while (WiFi.status() != WL_CONNECTED)
   {
             digitalWrite(LED_BUILTIN, LOW);
@@ -83,18 +87,12 @@ void brokerConnect(){
     } else {
        digitalWrite(LED_BUILTIN, LOW);
        }
-        client.publish(con_ch, "connected" );
+        client.publish(con_ch, "connected" ); //when esp module connects, it sends payload "connected" to topics /esp/macaddres/"MacAddress"
  } 
  }
 
 
-String topics[10] = {"gps/Latitude/", "gps/Longitude/", "gps/spd/", "gps/date/", "gps/time/", "gps/sat/", "gps/crs/", "gps/alt/"};
-
-void prepareTopics(){
-for (int i=0; i<=8;i++){
-    topics[i] += mac;
-}}
-
+//method used to converse strings to characters arrays, neccesary for sending data via MQTT protocol
 void sendGPSData(){
           
     lat_str = String(gps.location.lat(),7); 
@@ -138,6 +136,7 @@ void sendGPSData(){
      client.publish(altTopic, alt_ch); 
 }
 
+//Callback method for reciving payloads from subscribed topics
 String startGPS= "";
 String callback(char* topic, byte* message, unsigned int length) {
   String messageTemp;
@@ -161,11 +160,10 @@ if (strcmp(topic, gpsstart)==0) {
     {
       startGPS = "off";
     }
-   
+   }
+ return startGPS;
 }
 
-    return startGPS;
-}
 void setup() {
    pinMode(LED_BUILTIN, OUTPUT);
   gpsSerial.begin(GPSBaud);
