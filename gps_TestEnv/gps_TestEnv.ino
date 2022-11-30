@@ -78,9 +78,11 @@ void brokerConnect(){
   while (WiFi.status() != WL_CONNECTED)
   {
             digitalWrite(LED_BUILTIN, LOW);
-            delay(100);
+            delay(500);
             digitalWrite(LED_BUILTIN, HIGH);
   }
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
    client.setServer(mqtt_broker, mqtt_port);
      while (!client.connected()) {
     if (client.connect(toCharArray(WiFi.macAddress()), mqtt_uname, mqtt_passwd)) {
