@@ -11,8 +11,9 @@
 #define LED_BUILTIN 2
 
 // Wi-Fi information
-#define ssid "" //SSID of WiFi
-#define password "" // password of WiFi
+#define ssid "ESPtest" //SSID of WiFi
+#define password "MQTTtest2137!" // password of WiFi
+
 
 //variables for delay without delay function
 unsigned long previousMillis = 0;
@@ -24,10 +25,10 @@ char* toCharArray(String str) {
 }
 
 // Broker Setup
-char *mqtt_broker = ""; // broker ip
-int mqtt_port = ; // broker port
-char *mqtt_uname = ""; // broker username
-char *mqtt_passwd = ""; // broker password
+char *mqtt_broker = "192.168.0.123"; // broker ip
+int mqtt_port = 8885; // broker port
+char *mqtt_uname = "TestUser2"; // broker username
+char *mqtt_passwd = "test"; // broker password
 
 // topics about hardware info
 char *gpsstart = "esp/gps/start";
