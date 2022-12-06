@@ -6,6 +6,8 @@ services:
     image: wsapon/gnsstest:nodered
     ports:
         - "1880:1880"
+    env_file:
+        - .env    
     networks:
         test:
             ipv4_address: 172.18.0.4
