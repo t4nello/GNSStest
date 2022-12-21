@@ -9,7 +9,6 @@
 * [Testing](#tests)
 ## General info
 * Project for Engineer Degreee on Zielona Góra University Information Technology
-* Under supervisement of D.Eng Michał Doligalski 
 	
 ## Technologies
 Project is created with:
