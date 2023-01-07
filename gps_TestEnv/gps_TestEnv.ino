@@ -13,9 +13,8 @@
 #define LED_BUILTIN 2
 
 // Wi-Fi information
-#define ssid ""
-#define password "
-
+#define ssid "" //SSID of WiFi
+#define password "" // password of WiFi
 
 //variables for delay without delay function
 unsigned long previousMillis = 0;
@@ -27,10 +26,10 @@ char* toCharArray(String str) {
 }
 
 // Broker Setup
-char *mqtt_broker = "";
-int mqtt_port = ;
-char *mqtt_uname = "";
-char *mqtt_passwd = "";
+char *mqtt_broker = ""; // broker ip
+int mqtt_port = ; // broker port
+char *mqtt_uname = ""; // broker username
+char *mqtt_passwd = ""; // broker password
 
 // topics about hardware info
 char *gpsstart = "esp/gps/start";
@@ -81,9 +80,11 @@ void brokerConnect(){
   while (WiFi.status() != WL_CONNECTED)
   {
             digitalWrite(LED_BUILTIN, LOW);
-            delay(100);
+            delay(500);
             digitalWrite(LED_BUILTIN, HIGH);
   }
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
    client.setServer(mqtt_broker, mqtt_port);
      while (!client.connected()) {
     if (client.connect(toCharArray(WiFi.macAddress()), mqtt_uname, mqtt_passwd)) {
