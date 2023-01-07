@@ -1,3 +1,4 @@
+//neccesary libraries
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <TinyGPS++.h>
@@ -11,8 +12,8 @@
 #define LED_BUILTIN 2
 
 // Wi-Fi information
-#define ssid "ESPtest" //SSID of WiFi
-#define password "MQTTtest2137!" // password of WiFi
+#define ssid "ESPTest" //SSID of WiFi
+#define password "MQTTTest2137!" // password of WiFi
 
 
 //variables for delay without delay function
@@ -70,7 +71,7 @@ PubSubClient client(wifiConnection);
 TinyGPSPlus gps;
 SoftwareSerial gpsSerial(rxPin, txPin);
 
-
+//method to connect to wifi and mqtt broker 
 void brokerConnect(){
   WiFi.begin(ssid, password);        
   String client_id = "esp8266-client- " + mac;
@@ -165,6 +166,18 @@ if (strcmp(topic, gpsstart)==0) {
  return startGPS;
 }
 
+long lastReconnectAttempt = 0;
+
+//method to recoonect when esp looses connection with broker after 5 seconds
+boolean reconnect() {
+  if (client.connect(toCharArray(WiFi.macAddress()), mqtt_uname, mqtt_passwd)) {
+   client.publish(con_ch, "connected" );
+   client.subscribe(gpsstart);
+   client.subscribe(locate);
+  }
+  return client.connected();
+}
+
 void setup() {
    pinMode(LED_BUILTIN, OUTPUT);
   gpsSerial.begin(GPSBaud);
@@ -175,11 +188,21 @@ void setup() {
   client.subscribe(gpsstart);
    client.subscribe(locate);
   prepareTopics();
-
+lastReconnectAttempt = 0;
  }
 
 void loop(){
+  
 unsigned long currentMillis = millis();
+if (!client.connected()) {
+    long now = millis();
+    if (now - lastReconnectAttempt > 5000) {
+      lastReconnectAttempt = now;
+      if (reconnect()) {
+        lastReconnectAttempt = 0;
+      }
+    }
+  } else {
  client.loop();
   while (gpsSerial.available() > 0 ) {
     if (gps.encode(gpsSerial.read()))
@@ -195,4 +218,5 @@ unsigned long currentMillis = millis();
         }
       }
     }
+}
 }
