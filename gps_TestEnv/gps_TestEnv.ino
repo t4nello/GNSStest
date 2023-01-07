@@ -1,3 +1,4 @@
+
 //neccesary libraries
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
@@ -12,8 +13,8 @@
 #define LED_BUILTIN 2
 
 // Wi-Fi information
-#define ssid "ESPTest" //SSID of WiFi
-#define password "MQTTTest2137!" // password of WiFi
+#define ssid ""
+#define password "
 
 
 //variables for delay without delay function
@@ -26,10 +27,10 @@ char* toCharArray(String str) {
 }
 
 // Broker Setup
-char *mqtt_broker = "192.168.0.123"; // broker ip
-int mqtt_port = 8885; // broker port
-char *mqtt_uname = "TestUser2"; // broker username
-char *mqtt_passwd = "test"; // broker password
+char *mqtt_broker = "";
+int mqtt_port = ;
+char *mqtt_uname = "";
+char *mqtt_passwd = "";
 
 // topics about hardware info
 char *gpsstart = "esp/gps/start";
