@@ -16,3 +16,5 @@ $unichar = $([char]0x0022)
  (Get-Content -path ./gps_TestEnv/gps_TestEnv.ino -Raw) -replace '(\bmqtt_passwd\b =)(.*)',"mqtt_passwd = $unichar$mqttPassword$unichar;" |  Set-Content ./gps_TestEnv/gps_TestEnv.ino 
  (Get-Content -path ./gps_TestEnv/gps_TestEnv.ino -Raw) -replace '(\bssid\b )(.*)',"ssid $unichar$wifiSsid$unichar" |  Set-Content ./gps_TestEnv/gps_TestEnv.ino 
  (Get-Content -path ./gps_TestEnv/gps_TestEnv.ino -Raw) -replace '(\bpassword\b )(.*)',"password $unichar$wifiPassword$unichar" |  Set-Content ./gps_TestEnv/gps_TestEnv.ino 
+ 
+ docker-compose up -d
