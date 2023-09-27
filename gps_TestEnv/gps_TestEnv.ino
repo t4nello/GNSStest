@@ -5,6 +5,8 @@
 #include <SoftwareSerial.h>
 #include <ArduinoJson.h>
 
+#undef  MQTT_MAX_PACKET_SIZE 
+#define MQTT_MAX_PACKET_SIZE 500 
 #define RxPin 4
 #define txPin 5
 #define baudRate 115200
@@ -19,13 +21,13 @@ const char pass[] = "PiwkoPaliwko123!";
 TinyGPSPlus gps;
 SoftwareSerial ss(RxPin, txPin);
 WiFiClient net;
-MQTTClient client;
+MQTTClient client(256);
 
 unsigned long lastMillis = 0;
 bool enableGps = false;
 
 void connect() {
-  Serial.print("checking wifi...");
+  
   while (WiFi.status() != WL_CONNECTED) {
    Serial.print(".");
   }
@@ -42,18 +44,20 @@ void connect() {
 }
 
 int sessionID = 0 ;
-void messageReceived(String &topic, String &payload ) {
+void messageReceived(String &topic, String &payload) {
   if (topic.compareTo("esp/detect") == 0 && payload.compareTo(WiFi.macAddress()) == 0) {
-    Serial.println(F("lokalizuj"));
-   digitalWrite(LED_BUILTIN, HIGH);
+  
+    digitalWrite(LED_BUILTIN, HIGH);
   } else if (topic.compareTo("gps/metric/enable") == 0) {
+    sessionID = payload.toInt();
     enableGps = true;
-    Serial.println(F("wllacz"));
+    
+   
   } else if (topic.compareTo("gps/metric/disable") == 0) {
-    enableGps = false; 
-    Serial.println(F("wylacz"));
+    enableGps = false;
   }
 }
+
 String convertGPSDateTime(String date, String time) {
 
   int year = date.substring(4, 6).toInt();
@@ -77,22 +81,20 @@ void publishInfo()
 {
 String dateString = String(gps.date.value());
 String timeString = String(gps.time.value());
-Serial.print(timeString);
 String datetime = convertGPSDateTime(dateString, timeString);
-DynamicJsonDocument doc(1024);
-doc["Device"] = String(WiFi.macAddress());
+StaticJsonDocument<1024> doc;
+doc["Device"] = WiFi.macAddress();
 doc["Latitude"] = gps.location.lat();
 doc["Longitude"] = gps.location.lng();
 doc["Date"] = datetime;
-String jsonStr;
+doc["SessionID"] = sessionID;
+ String jsonStr;
   serializeJson(doc, jsonStr);
-   Serial.print('\n');
-
-client.publish("gps/metric", jsonStr);
-serializeJson(doc, Serial);
+ 
+  client.publish("gps/metric", jsonStr);
+ 
 
 }
-
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
@@ -106,7 +108,7 @@ void setup() {
 void loop() {
 
   client.loop();
-   
+  delay(10);
   client.onMessage(messageReceived);
   if (!client.connected()) {
     connect();
