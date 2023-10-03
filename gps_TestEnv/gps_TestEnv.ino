@@ -27,13 +27,13 @@ unsigned long lastMillis = 0;
 bool enableGps = false;
 
 void connect() {
-  
+
   while (WiFi.status() != WL_CONNECTED) {
    Serial.print(".");
   }
 
   Serial.print("\nconnecting...");
-  while (!client.connect("arduino", "public", "public")) {
+  while (!client.connect((WiFi.macAddress().c_str()), "public", "public")) {
    Serial.print(".");
   }
 
@@ -43,13 +43,18 @@ void connect() {
   client.subscribe("gps/metric/disable");
 }
 
-int sessionID = 0 ;
+int SessionId=0;
 void messageReceived(String &topic, String &payload) {
+
   if (topic.compareTo("esp/detect") == 0 && payload.compareTo(WiFi.macAddress()) == 0) {
   
     digitalWrite(LED_BUILTIN, HIGH);
   } else if (topic.compareTo("gps/metric/enable") == 0) {
-    sessionID = payload.toInt();
+    SessionId = payload.toInt();
+    if (SessionId == 0){
+    enableGps = false;
+    }
+    else
     enableGps = true;
     
    
@@ -59,12 +64,11 @@ void messageReceived(String &topic, String &payload) {
 }
 
 String convertGPSDateTime(String date, String time) {
-
-  int year = date.substring(4, 6).toInt();
-  int month = date.substring(2, 4).toInt();
-  int day = date.substring(0, 2).toInt();
- date =  String(month < 10 ? "0" : "") + String(month) + "/" +
-         String(day < 10 ? "0" : "") + String(day) + "/20" +
+  int year = gps.date.year();
+  int month = gps.date.month();
+  int day = gps.date.day();
+  date = String(month < 10 ? "0" : "") + String(month) + "/" +
+         String(day < 10 ? "0" : "") + String(day) + "/" +
          String(year < 10 ? "0" : "") + String(year);
 
   int hour = time.substring(0, 2).toInt();
@@ -73,6 +77,7 @@ String convertGPSDateTime(String date, String time) {
    time = String(hour < 10 ? "0" : "") + String(hour) + ":" +
          String(minute < 10 ? "0" : "") + String(minute) + ":" +
          String(second < 10 ? "0" : "") + String(second);
+  Serial.print(date);
   return date + " " + time;
 }
 
@@ -86,15 +91,17 @@ StaticJsonDocument<1024> doc;
 doc["Device"] = WiFi.macAddress();
 doc["Latitude"] = gps.location.lat();
 doc["Longitude"] = gps.location.lng();
+doc["Speed"] = gps.speed.kmph();
+doc["Altitude"] = gps.altitude.meters();
+doc["Satellites"] = gps.satellites.value();
 doc["Date"] = datetime;
-doc["SessionID"] = sessionID;
+doc["SessionId"] = SessionId;
  String jsonStr;
   serializeJson(doc, jsonStr);
  
   client.publish("gps/metric", jsonStr);
- 
-
 }
+
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
@@ -119,7 +126,11 @@ void loop() {
     if (gps.location.isValid() && enableGps == true ){
       if (millis() - lastMillis > 3000) {
           publishInfo();
+          Serial.print("Data \n");
+          Serial.print( gps.date.day());
+        
           lastMillis = millis();
+          Serial.println(SessionId);
     }
   }
 }
