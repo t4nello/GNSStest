@@ -71,14 +71,15 @@ String convertGPSDateTime(String date, String time) {
          String(day < 10 ? "0" : "") + String(day) + "/" +
          String(year < 10 ? "0" : "") + String(year);
 
-  int hour = time.substring(0, 2).toInt();
-  int minute = time.substring(2, 4).toInt();
-  int second = time.substring(4, 6).toInt();
+  int hour = gps.time.hour();
+  int minute = gps.time.minute();
+  int second = gps.time.second();
    time = String(hour < 10 ? "0" : "") + String(hour) + ":" +
          String(minute < 10 ? "0" : "") + String(minute) + ":" +
          String(second < 10 ? "0" : "") + String(second);
-  Serial.print(date);
+   Serial.print(time);
   return date + " " + time;
+
 }
 
 
@@ -126,8 +127,7 @@ void loop() {
     if (gps.location.isValid() && enableGps == true ){
       if (millis() - lastMillis > 3000) {
           publishInfo();
-          Serial.print("Data \n");
-          Serial.print( gps.date.day());
+         
         
           lastMillis = millis();
           Serial.println(SessionId);
