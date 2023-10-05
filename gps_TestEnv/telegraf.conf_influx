@@ -1,0 +1,42 @@
+[agent]
+ interval = "10s"
+
+  round_interval = true
+
+  metric_batch_size = 1000000
+
+  metric_buffer_limit = 100000
+
+  collection_jitter = "0s"
+
+  flush_interval = "10s"
+
+  flush_jitter = "0s"
+
+[[inputs.mqtt_consumer]]
+  servers = ["tcp://127.0.0.1:1883"] # Zmodyfikuj na adres swojego serwera MQTT
+  topics = ["gps/metric","test/1"] # Zmodyfikuj na temat, który chcesz monitorować
+  data_format = "json"
+  json_name_key = "Device"
+  json_time_key = "Date"
+  json_time_format = "01/02/2006 15:04:05"
+
+[[outputs.file]]
+  files = ["/tmp/metric.out"] # Ścieżka do pliku, w którym chcesz zapisać dane
+
+[[outputs.influxdb_v2]]
+  ## The URLs of the InfluxDB cluster nodes.
+  ##
+  ## Multiple URLs can be specified for a single cluster, only ONE of the
+  ## urls will be written to each interval.
+  ##   ex: urls = ["https://us-west-2-1.aws.cloud2.influxdata.com"]
+  urls = ["http://192.168.0.123:8086"]
+
+  ## Token for authentication.
+  token = "4nE_Lu_XbawwdRUIfPPr8481aV5Q-SspBnTDmTCkEnioLP8cRI5HSZeeouw-on05JzR2vAJXHiNYuIzQtlM4NQ=="
+
+  ## Organization is the name of the organization you wish to write to; must exist.
+  organization = "UZ"
+
+  ## Destination bucket to write into.
+  bucket = "GNSSTestV2"
