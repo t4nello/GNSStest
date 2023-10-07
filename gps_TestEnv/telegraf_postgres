@@ -1,5 +1,5 @@
-agent]
- interval = "10s"
+[agent]
+interval = "10s"
 
   round_interval = true
 
@@ -14,28 +14,31 @@ agent]
   flush_jitter = "0s"
 
 [[inputs.mqtt_consumer]]
-  servers = ["tcp://127.0.0.1:1883"] # Zmodyfikuj na adres swojego serwera MQTT
-  topics = ["gps/metric","test/1"] # Zmodyfikuj na temat, który chcesz monitorować
-  data_format = "json"
-  ## json_string_fields= ["time"]
-
+  servers = ["tcp://127.0.0.1:1883"] 
+  topics = ["gps/metric","test/1"] 
+   data_format = "json"
+   json_time_key = "time"
+   json_time_format = "unix"
+   json_string_fields = ["device"]
 [[outputs.file]]
-  files = ["/home/rpi4/metric.out"] # Ścieżka do pliku, w którym chcesz zapisać dane
+  files = ["/home/rpi4/metric.out"] 
 
 
 [[outputs.postgresql]]
   connection = "host=localhost user=postgres password=admin123 sslmode=disable dbname=tsdb"
   create_templates =['''
-    CREATE TABLE IF NOT EXISTS device_data (
-      device VARCHAR(17) PRIMARY KEY,
+    CREATE TABLE IF NOT EXISTS mqtt_consumer (
+      host VARCHAR(255),
+      topic VARCHAR(255),
+      device VARCHAR(17),
       latitude FLOAT,
       longitude FLOAT,
-      speed INTEGER,
-      altitude INTEGER,
+      speed FLOAT,
+      altitude FLOAT,
       satellites INTEGER,
-      time BIGINT,
+      time TIMESTAMPTZ,
       sessionid INTEGER
     );
-   SELECT create_hypertable('device_data','time', chunk_time_interval => INTERVAL '1 week', if_not_exists => true);
+     SELECT create_hypertable(device_data,'date',chunk_time_interval := INTERVAL '1 week',if_not_exists := true);
   ''']
   schema = "public"
