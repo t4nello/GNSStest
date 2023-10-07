@@ -1,0 +1,41 @@
+agent]
+ interval = "10s"
+
+  round_interval = true
+
+  metric_batch_size = 1000000
+
+  metric_buffer_limit = 100000
+
+  collection_jitter = "0s"
+
+  flush_interval = "10s"
+
+  flush_jitter = "0s"
+
+[[inputs.mqtt_consumer]]
+  servers = ["tcp://127.0.0.1:1883"] # Zmodyfikuj na adres swojego serwera MQTT
+  topics = ["gps/metric","test/1"] # Zmodyfikuj na temat, który chcesz monitorować
+  data_format = "json"
+  ## json_string_fields= ["time"]
+
+[[outputs.file]]
+  files = ["/home/rpi4/metric.out"] # Ścieżka do pliku, w którym chcesz zapisać dane
+
+
+[[outputs.postgresql]]
+  connection = "host=localhost user=postgres password=admin123 sslmode=disable dbname=tsdb"
+  create_templates =['''
+    CREATE TABLE IF NOT EXISTS device_data (
+      device VARCHAR(17) PRIMARY KEY,
+      latitude FLOAT,
+      longitude FLOAT,
+      speed INTEGER,
+      altitude INTEGER,
+      satellites INTEGER,
+      time BIGINT,
+      sessionid INTEGER
+    );
+   SELECT create_hypertable('device_data','time', chunk_time_interval => INTERVAL '1 week', if_not_exists => true);
+  ''']
+  schema = "public"
