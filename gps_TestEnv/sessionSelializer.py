@@ -3,7 +3,6 @@ import paho.mqtt.client as mqtt
 
 config_file = "config.json"
 
-
 def load_config():
     try:
         with open(config_file, 'r') as file:
@@ -11,28 +10,23 @@ def load_config():
     except FileNotFoundError:
         return {}
 
-
 def save_config(config):
     with open(config_file, 'w') as file:
         json.dump(config, file)
 
-
 config = load_config()
 session_number = config.get("session_number", 0)
 session_enabled = False
-
 
 def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
     client.subscribe("gps/metric/enable")
     client.subscribe("gps/metric/disable")
 
-
 def on_message(client, userdata, msg):
     topic = msg.topic
     message = msg.payload.decode("utf-8")
     handle_message(topic, message)
-
 
 def handle_message(topic, message):
     global session_number
@@ -43,18 +37,23 @@ def handle_message(topic, message):
             session_number += 1
             session_enabled = True
             config["session_number"] = session_number
+            config["session_status"] = "started"
             save_config(config)
 
-           
             payload = session_number
-            payload_json = json.dumps(payload)
-            mqtt_client.publish("gps/metric/enable", payload)
+            session_id = json.dumps(payload)
+            session_status = json.dumps("started")
+
+            mqtt_client.publish("gps/metric/enable", session_id)
+            mqtt_client.publish("gps/metric/status", session_status)
 
     elif topic == "gps/metric/disable":
         if session_enabled:
             session_enabled = False
+            config["session_status"] = "stopped"
+            session_status = json.dumps("stopped")
+            mqtt_client.publish("gps/metric/status", session_status)
             save_config(config)
-
 
 mqtt_client = mqtt.Client()
 
