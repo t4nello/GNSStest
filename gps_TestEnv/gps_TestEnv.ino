@@ -72,9 +72,9 @@ long convertGPSDateTime() {
         int minute = gps.time.minute();
         int second = gps.time.second();
 
-        // Utwórz obiekt tmElements_t
+       
         tmElements_t tm;
-        tm.Year = year - 1970; // Rok od 1970
+        tm.Year = year - 1970; 
         tm.Month = month;
         tm.Day = day;
         tm.Hour = hour;
@@ -132,7 +132,7 @@ void loop() {
          
         
           lastMillis = millis();
-          Serial.println(SessionId);
+         
     }
   }
 }
